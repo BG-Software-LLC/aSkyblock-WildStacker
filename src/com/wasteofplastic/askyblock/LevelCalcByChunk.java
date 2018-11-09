@@ -9,13 +9,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import com.wasteofplastic.askyblock.util.WildStackerUtil;
 import org.apache.commons.lang.math.NumberUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.ChunkSnapshot;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.scheduler.BukkitTask;
@@ -139,24 +143,38 @@ public class LevelCalcByChunk {
                     boolean belowSeaLevel = Settings.seaHeight > 0 && y <= Settings.seaHeight;
                     // Air is free
                     if (!blockType.equals(Material.AIR)) {
-                        checkBlock(blockType, chunk.getBlockData(x, y, z), belowSeaLevel);
+                        checkBlock(blockType, chunk.getBlockData(x, y, z), belowSeaLevel, new Location(Bukkit.getWorld(chunk.getWorldName()), chunk.getX()*16+x, y, chunk.getZ()*16+z));
                     }
                 }
             }
         }
     }
 
-    private void checkBlock(Material type, int blockData, boolean belowSeaLevel) {
+    private void checkBlock(Material type, int blockData, boolean belowSeaLevel, Location location) {
         // Currently, there is no alternative to using block data (Feb 2018)
+        int multiplier = 1;
+
+        if(Bukkit.getPluginManager().isPluginEnabled("WildStacker")){
+            if(type == Material.MOB_SPAWNER)
+                multiplier = WildStackerUtil.getSpawnerAmount(location);
+            else if(type == Material.CAULDRON && WildStackerUtil.isStackedBarrel(location)){
+                ItemStack itemStack = WildStackerUtil.getBarrelItem(location);
+                type = itemStack.getType();
+                blockData = itemStack.getDurability();
+                multiplier = WildStackerUtil.getBarrelAmount(location);
+            }
+        }
+
         @SuppressWarnings("deprecation")
         MaterialData md = new MaterialData(type, (byte) blockData);
         int count = limitCount(md);
+
         if (count != 0) {
             if (belowSeaLevel) {
-                result.underWaterBlockCount += count;
+                result.underWaterBlockCount += (count * multiplier);
                 result.uwCount.add(md);
             } else {
-                result.rawBlockCount += count;
+                result.rawBlockCount += (count * multiplier);
                 result.mdCount.add(md);
             }
         }
