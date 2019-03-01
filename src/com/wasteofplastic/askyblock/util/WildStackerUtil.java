@@ -1,9 +1,9 @@
 package com.wasteofplastic.askyblock.util;
 
+import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import org.bukkit.Location;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.inventory.ItemStack;
-import xyz.wildseries.wildstacker.api.WildStackerAPI;
 
 public class WildStackerUtil {
 
