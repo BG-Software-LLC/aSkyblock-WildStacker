@@ -13,6 +13,7 @@ import com.wasteofplastic.askyblock.util.WildStackerUtil;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -98,10 +99,14 @@ public class LevelCalcByChunk {
                     Pair<Integer, Integer> pair = it.next();
                     if (!world.isChunkLoaded(pair.x, pair.z)) {
                         world.loadChunk(pair.x, pair.z);
-                        chunkSnapshot.add(world.getChunkAt(pair.x, pair.z).getChunkSnapshot());
+                        Chunk ch = world.getChunkAt(pair.x, pair.z);
+                        chunkSnapshot.add(ch.getChunkSnapshot());
+                        WildStackerUtil.cacheChunk(ch);
                         world.unloadChunk(pair.x, pair.z);
                     } else {
-                        chunkSnapshot.add(world.getChunkAt(pair.x, pair.z).getChunkSnapshot());
+                        Chunk ch = world.getChunkAt(pair.x, pair.z);
+                        chunkSnapshot.add(ch.getChunkSnapshot());
+                        WildStackerUtil.cacheChunk(ch);
                     }
                     it.remove();
                 }
@@ -148,6 +153,8 @@ public class LevelCalcByChunk {
                 }
             }
         }
+
+        WildStackerUtil.uncacheChunk(chunk.getX(), chunk.getZ());
     }
 
     private void checkBlock(Material type, int blockData, boolean belowSeaLevel, Location location) {
@@ -156,12 +163,13 @@ public class LevelCalcByChunk {
 
         if(Bukkit.getPluginManager().isPluginEnabled("WildStacker")){
             if(type == Material.MOB_SPAWNER)
-                multiplier = WildStackerUtil.getSpawnerAmount(location);
-            else if(type == Material.CAULDRON && WildStackerUtil.isStackedBarrel(location)){
-                ItemStack itemStack = WildStackerUtil.getBarrelItem(location);
-                type = itemStack.getType();
-                blockData = itemStack.getDurability();
-                multiplier = WildStackerUtil.getBarrelAmount(location);
+                multiplier = WildStackerUtil.getSpawner(location).x;
+            else if(type == Material.CAULDRON){
+                Pair<Integer, Material> barrel = WildStackerUtil.getBlock(location);
+                if(barrel != null) {
+                    type = barrel.z;
+                    multiplier = barrel.x;
+                }
             }
         }
 

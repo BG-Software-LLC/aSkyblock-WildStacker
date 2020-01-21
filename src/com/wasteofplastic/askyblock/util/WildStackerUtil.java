@@ -1,26 +1,67 @@
 package com.wasteofplastic.askyblock.util;
 
 import com.bgsoftware.wildstacker.api.WildStackerAPI;
+import com.bgsoftware.wildstacker.api.objects.StackedSnapshot;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class WildStackerUtil {
 
-    public static int getSpawnerAmount(Location location){
-        return WildStackerAPI.getSpawnersAmount((CreatureSpawner) location.getBlock().getState());
+    private static final Map<String, StackedSnapshot> chunkSnapshots = new HashMap<>();
+
+    public static void cacheChunk(Chunk chunk){
+        try {
+            StackedSnapshot stackedSnapshot;
+            try {
+                stackedSnapshot = WildStackerAPI.getWildStacker().getSystemManager().getStackedSnapshot(chunk);
+            } catch (Throwable ex) {
+                //noinspection deprecation
+                stackedSnapshot = WildStackerAPI.getWildStacker().getSystemManager().getStackedSnapshot(chunk, false);
+            }
+            if (stackedSnapshot != null)
+                chunkSnapshots.put(getId(chunk), stackedSnapshot);
+        }catch(Throwable ignored){}
     }
 
-    public static int getBarrelAmount(Location location){
-        return WildStackerAPI.getBarrelAmount(location.getBlock());
+    public static void uncacheChunk(int x, int z){
+        chunkSnapshots.remove(getId(x, z));
     }
 
-    public static ItemStack getBarrelItem(Location location){
-        return WildStackerAPI.getStackedBarrel(location.getBlock()).getBarrelItem(1);
+    public static Pair<Integer, EntityType> getSpawner(Location location) {
+        String id = getId(location);
+        if(chunkSnapshots.containsKey(id)) {
+            Map.Entry<Integer, EntityType> entry = chunkSnapshots.get(id).getStackedSpawner(location);
+            return new Pair<>(entry.getKey(), entry.getValue());
+        }
+
+        throw new RuntimeException("Chunk " + id + " is not cached.");
     }
 
-    public static boolean isStackedBarrel(Location location){
-        return WildStackerAPI.getWildStacker().getSystemManager().isStackedBarrel(location.getBlock());
+    public static Pair<Integer, Material> getBlock(Location location) {
+        String id = getId(location);
+        if(chunkSnapshots.containsKey(id)) {
+            Map.Entry<Integer, Material> entry = chunkSnapshots.get(id).getStackedBarrel(location);
+            return entry.getValue().name().contains("AIR") ? null : new Pair<>(entry.getKey(), entry.getValue());
+        }
+
+        throw new RuntimeException("Chunk " + id + " is not cached. Location: " + location);
+    }
+
+    private static String getId(Location location){
+        return getId(location.getBlockX() >> 4, location.getBlockZ() >> 4);
+    }
+
+    private static String getId(Chunk chunk){
+        return getId(chunk.getX(), chunk.getZ());
+    }
+
+    private static String getId(int x, int z){
+        return x + "," + z;
     }
 
 }
