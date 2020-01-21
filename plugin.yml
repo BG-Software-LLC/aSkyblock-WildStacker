@@ -2,7 +2,7 @@ name: ASkyBlock
 main: com.wasteofplastic.askyblock.ASkyBlock
 version: ${version}
 description: A SkyBlock Plugin
-author: Tastybento
+author: [Tastybento, Ome_R]
 depend: [Vault]
 load: startup
 loadbefore: [Multiverse-Core]
