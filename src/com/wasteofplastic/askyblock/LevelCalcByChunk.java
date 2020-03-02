@@ -165,9 +165,10 @@ public class LevelCalcByChunk {
             if(type == Material.MOB_SPAWNER)
                 multiplier = WildStackerUtil.getSpawner(location).x;
             else if(type == Material.CAULDRON){
-                Pair<Integer, Material> barrel = WildStackerUtil.getBlock(location);
+                Pair<Integer, ItemStack> barrel = WildStackerUtil.getBlock(location);
                 if(barrel != null) {
-                    type = barrel.z;
+                    type = barrel.z.getType();
+                    blockData = barrel.z.getDurability();
                     multiplier = barrel.x;
                 }
             }
