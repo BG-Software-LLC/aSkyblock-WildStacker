@@ -1,6 +1,8 @@
 package com.wasteofplastic.askyblock.util;
 
 
+import java.util.Map;
+
 public class Pair<X, Z> {
     public final X x;
     public final Z z;
@@ -8,6 +10,10 @@ public class Pair<X, Z> {
     public Pair(X x, Z z) {
         this.x = x;
         this.z = z;
+    }
+
+    public Pair(Map.Entry<X, Z> entry) {
+        this(entry.getKey(), entry.getValue());
     }
 
     /* (non-Javadoc)

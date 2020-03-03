@@ -4,6 +4,7 @@ import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.bgsoftware.wildstacker.api.objects.StackedSnapshot;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
@@ -45,8 +46,17 @@ public class WildStackerUtil {
     public static Pair<Integer, ItemStack> getBlock(Location location) {
         String id = getId(location);
         if(chunkSnapshots.containsKey(id)) {
-            Map.Entry<Integer, ItemStack> entry = chunkSnapshots.get(id).getStackedBarrelItem(location);
-            return entry.getValue().getType().name().contains("AIR") ? null : new Pair<>(entry.getKey(), entry.getValue());
+            StackedSnapshot stackedSnapshot = chunkSnapshots.get(id);
+            Pair<Integer, ItemStack> pair;
+
+            try{
+                pair = new Pair<>(stackedSnapshot.getStackedBarrelItem(location));
+            }catch(Throwable ex){
+                Map.Entry<Integer, Material> barrelEntry = stackedSnapshot.getStackedBarrel(location);
+                pair = new Pair<>(barrelEntry.getKey(), new ItemStack(barrelEntry.getValue()));
+            }
+
+            return pair.z.getType().name().contains("AIR") ? null : pair;
         }
 
         throw new RuntimeException("Chunk " + id + " is not cached. Location: " + location);
